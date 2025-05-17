@@ -2,23 +2,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ranking.h"
+#include "util.h"
 
 Jogador* ranking = NULL;
 
 void adicionarAoRanking(const char* nome, int tentativas, int acertos) {
-    Jogador* novo = malloc(sizeof(Jogador));
+    Jogador* novo = (Jogador*)malloc(sizeof(Jogador));
     if (!novo) {
-        printf("Erro ao alocar memória para novo jogador.\n");
+        printf("Erro ao alocar memória para jogador.\n");
         exit(1);
     }
 
     strncpy(novo->nome, nome, MAX_NOME);
+    novo->nome[MAX_NOME - 1] = '\0';
     novo->tentativas = tentativas;
     novo->acertos = acertos;
     novo->prox = NULL;
 
-    novo->prox = ranking;
-    ranking = novo;
+    if (!ranking) {
+        ranking = novo;
+    } else {
+        Jogador* atual = ranking;
+        while (atual->prox) atual = atual->prox;
+        atual->prox = novo;
+    }
 
     ordenarRankingPorMerito();
 }
@@ -51,20 +58,10 @@ void ordenarRankingPorMerito() {
     ranking = sorted;
 }
 
-void exibirRanking() {
-    printf("\nRANKING:\n");
-    Jogador* atual = ranking;
-    int pos = 1;
-    while (atual) {
-        printf("%d. %s - Acertos: %d | Tentativas: %d\n", pos++, atual->nome, atual->acertos, atual->tentativas);
-        atual = atual->prox;
-    }
-}
-
 void salvarRanking() {
     FILE* file = fopen("ranking.txt", "w");
     if (!file) {
-        perror("Erro ao salvar ranking");
+        printf("Erro ao salvar o ranking.\n");
         return;
     }
 
@@ -91,6 +88,28 @@ void carregarRanking() {
     fclose(file);
 }
 
+void exibirRanking() {
+    limparTela();
+
+    printf("🏆 RANKING DOS JOGADORES 🏆\n\n");
+
+    Jogador* atual = ranking;
+    int pos = 1;
+
+    while (atual) {
+        printf("%2d. %-20s | Acertos: %d | Tentativas: %d\n",
+               pos++, atual->nome, atual->acertos, atual->tentativas);
+        atual = atual->prox;
+    }
+
+    if (pos == 1) {
+        printf("Nenhum jogador registrado ainda.\n");
+    }
+
+    printf("\nPressione Enter para voltar ao menu...");
+    pausarParaContinuar();
+}
+
 void liberarRanking() {
     Jogador* atual = ranking;
     while (atual) {
@@ -105,5 +124,4 @@ void resetarRanking() {
     liberarRanking();
     FILE* file = fopen("ranking.txt", "w");
     if (file) fclose(file);
-    printf("Ranking resetado com sucesso.\n");
 }

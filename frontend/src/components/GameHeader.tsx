@@ -1,59 +1,33 @@
-// frontend/src/components/GameHeader.tsx
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Info, Trophy } from "lucide-react";
+import React from "react";
+import { Award } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-interface GameHeaderProps {
+interface Props {
   openRanking: () => void;
 }
 
-const GameHeader: React.FC<GameHeaderProps> = ({ openRanking }) => {
-  return (
-    <header className="w-full px-2 py-4 flex justify-between items-center border-b border-gray-700 mb-4">
-      <Dialog>
-        <DialogTrigger asChild>
-          <button className="p-2 rounded-full hover:bg-gray-800 transition-colors">
-            <Info size={20} />
-          </button>
-        </DialogTrigger>
-        <DialogContent className="bg-wordle-dark text-wordle-light border border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Como Jogar</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <p>Adivinhe <strong>duas palavras</strong> secretas de 5 letras em até 6 tentativas.</p>
-            <p>Depois de cada tentativa, as letras ficarão coloridas para mostrar o quão perto você está das duas palavras:</p>
-            
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <div className="letter-tile letter-tile-correct">A</div>
-                <p>- A letra está na palavra e na posição correta.</p>
-              </div>
+const GameHeader: React.FC<Props> = ({ openRanking }) => (
+  <header
+    className="
+      fixed top-0 left-0 z-10 w-full
+      flex items-center justify-between
+      px-6 py-3
+      bg-black/90 backdrop-blur
+      border-b border-gray-700
+    "
+  >
+    <h1 className="text-2xl font-extrabold tracking-wide">DUETO</h1>
 
-              <div className="flex items-center space-x-2">
-                <div className="letter-tile letter-tile-present">M</div>
-                <p>- A letra está na palavra, mas na posição errada.</p>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <div className="letter-tile letter-tile-absent">Z</div>
-                <p>- A letra não está em nenhuma das palavras.</p>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <h1 className="text-2xl sm:text-3xl font-bold text-center">DUETO</h1>
-
-      <button 
-        onClick={openRanking} 
-        className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-      >
-        <Trophy size={20} />
-      </button>
-    </header>
-  );
-};
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={openRanking}
+      aria-label="Ver ranking"
+      className="text-white hover:bg-white/10"
+    >
+      <Award className="h-6 w-6" strokeWidth={2.2} />
+    </Button>
+  </header>
+);
 
 export default GameHeader;

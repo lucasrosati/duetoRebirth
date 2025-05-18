@@ -1,5 +1,5 @@
-/* ---------------------------  Index.tsx  --------------------------- */
-import React, { useState, useEffect, useCallback } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
 import GameHeader    from "@/components/GameHeader";
@@ -7,39 +7,43 @@ import GameBoard     from "@/components/GameBoard";
 import GameResult    from "@/components/GameResult";
 import RankingDialog from "@/components/RankingDialog";
 import NameDialog    from "@/components/NameDialog";
+import { fetchWords } from "@/lib/api";
 
-import { fetchWords }     from "@/lib/api";
-import { loadRank, saveRank } from "@/lib/rank";
-
-/* ---------- tipos ---------- */
+/* ---------- tipos utilitários ---------- */
 type TileStatus = "empty" | "filled" | "correct" | "present" | "absent";
-type KeyStatus  = "correct" | "present" | "absent";
-interface RankingEntry { name: string; score: number; attempts: number; }
+type GameState  = "playing" | "won" | "lost";
+interface RankingEntry { name: string; score: number; attempts: number }
 
-const MAX_ATTEMPTS = 6;
+const LS_KEY        = "dueto_rank";
+const MAX_ATTEMPTS  = 6;
 
-/* ================= componente ================= */
+/* ---------- helpers ---------- */
+const readRank  = (): RankingEntry[] =>
+  JSON.parse(localStorage.getItem(LS_KEY) ?? "[]");
+const writeRank = (r: RankingEntry[]) =>
+  localStorage.setItem(LS_KEY, JSON.stringify(r));
+
+/* ===================================================================== */
 const Index: React.FC = () => {
-  const { toast }                = useToast();
+  const { toast } = useToast();
 
-  const [player, setPlayer]      = useState("");
-  const [showName, setShowName]  = useState(true);
+  /* ---------- estado principal ---------- */
+  const [playerName, setPlayerName] = useState("");
+  const [showName,   setShowName]   = useState(true);
 
-  const [secret1, setSecret1]    = useState("");
-  const [secret2, setSecret2]    = useState("");
+  const [secret1, setSecret1] = useState("");
+  const [secret2, setSecret2] = useState("");
 
-  const [guesses, setGuesses]    = useState<string[]>([]);
-  const [current, setCurrent]    = useState("");
-  const [attempt, setAttempt]    = useState(0);
-  const [state, setState]        = useState<"playing" | "won" | "lost">("playing");
+  const [guesses, setGuesses]   = useState<string[]>([]);
+  const [current, setCurrent]   = useState("");
+  const [attempt, setAttempt]   = useState(0);
+  const [state,   setState]     = useState<GameState>("playing");
 
-  const [score, setScore]        = useState(0);
-  const [keyStatus, setKeyStatus]= useState<Record<string, KeyStatus>>({});
+  const [ranking,       setRanking]       = useState<RankingEntry[]>(readRank);
+  const [showRanking,   setShowRanking]   = useState(false);
+  const [showResult,    setShowResult]    = useState(false);
 
-  const [rank, setRank]          = useState<RankingEntry[]>(loadRank());
-  const [rankOpen, setRankOpen]  = useState(false);
-
-  /* -------- inicia / reinicia -------- */
+  /* ---------- inicia / reinicia partida ---------- */
   const startGame = useCallback(async () => {
     try {
       const { palavra1, palavra2 } = await fetchWords();
@@ -48,46 +52,46 @@ const Index: React.FC = () => {
     } catch {
       toast({
         title: "Erro",
-        description: "Backend indisponível — usando fallback.",
-        variant: "destructive"
+        description: "Backend indisponível – usando palavras locais.",
+        variant: "destructive",
       });
-      setSecret1("tempo");
-      setSecret2("veloz");
+      const local = ["aureo", "cargo"];           // fallback
+      setSecret1(local[0]);
+      setSecret2(local[1]);
     }
-
     setGuesses([]);
     setCurrent("");
     setAttempt(0);
-    setScore(0);
-    setKeyStatus({});
     setState("playing");
+    setShowResult(false);
   }, [toast]);
 
-  useEffect(() => { if (player) startGame(); }, [player, startGame]);
+  useEffect(() => { if (playerName) startGame(); }, [playerName, startGame]);
 
-  /* -------- keyboard global -------- */
+  /* ---------- escuta teclado físico ---------- */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (document.activeElement as HTMLElement | null)?.tagName;
-      if (showName || tag === "INPUT" || tag === "TEXTAREA") return;
-
-      const k = e.key.toLowerCase();
-      if (k === "enter")         { e.preventDefault(); pressEnter(); }
-      else if (k === "backspace"){ e.preventDefault(); pressBack(); }
-      else if (/^[a-z]$/.test(k)){ e.preventDefault(); pressLetter(k); }
+      if (showName || state !== "playing") return;
+      if (e.key === "Enter")   { e.preventDefault(); handleEnter();   }
+      else if (e.key === "Backspace") { e.preventDefault(); handleBack(); }
+      else if (/^[a-zA-Z]$/.test(e.key)) {
+        e.preventDefault();
+        handleLetter(e.key.toLowerCase());
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, [current, state, showName]);
 
-  /* -------- avaliação Wordle -------- */
+  /* ---------- lógica Wordle ---------- */
   const evaluate = (guess: string, target: string): TileStatus[] => {
     type Tmp = TileStatus | "pending";
     const res: Tmp[] = Array(5).fill("empty");
     const bal: Record<string, number> = {};
 
     for (let i = 0; i < 5; i++) {
-      const g = guess[i], t = target[i];
+      const g = guess[i];
+      const t = target[i];
       if (!g) continue;
       if (g === t) res[i] = "correct";
       else { res[i] = "pending"; bal[t] = (bal[t] || 0) + 1; }
@@ -95,67 +99,59 @@ const Index: React.FC = () => {
     for (let i = 0; i < 5; i++) {
       if (res[i] !== "pending") continue;
       const g = guess[i];
-      if (bal[g]) { res[i] = "present"; bal[g]--; }
-      else        { res[i] = "absent";  }
+      res[i] = bal[g] ? "present" : "absent";
+      if (bal[g]) bal[g]--;
     }
     return res as TileStatus[];
   };
 
-  /* -------- handlers -------- */
-  const pressLetter = (l: string) => {
-    if (state !== "playing" || current.length >= 5) return;
-    setCurrent(p => p + l);
+  /* ---------- handlers ---------- */
+  const handleLetter = (l: string) => {
+    if (current.length < 5) setCurrent((p) => p + l);
   };
-  const pressBack = () => state === "playing" && setCurrent(p => p.slice(0, -1));
+  const handleBack = () => setCurrent((p) => p.slice(0, -1));
 
-  const pressEnter = () => {
-    if (state !== "playing" || current.length !== 5) return;
-
-    const rowScore = (current === secret1 ? 1 : 0) + (current === secret2 ? 1 : 0);
-    const newScore = score + rowScore;          // <-- valor correto para ranking
-    setScore(newScore);
-
-    /* teclado */
-    const upd = { ...keyStatus };
-    [...evaluate(current, secret1), ...evaluate(current, secret2)]
-      .forEach((st, idx) => {
-        const ch = current[idx % 5];
-        if (!ch) return;
-        if (st === "correct") upd[ch] = "correct";
-        else if (st === "present" && upd[ch] !== "correct") upd[ch] = "present";
-        else if (st === "absent" && !upd[ch]) upd[ch] = "absent";
+  const handleEnter = () => {
+    if (current.length !== 5) {
+      toast({
+        title: "Palavra incompleta",
+        description: "Digite 5 letras antes de enviar.",
+        variant: "destructive",
       });
-    setKeyStatus(upd);
+      return;
+    }
 
-    /* grid */
-    setGuesses(g => [...g, current]);
+    const hit =
+      (current === secret1 ? 1 : 0) + (current === secret2 ? 1 : 0);
+
+    setGuesses((g) => [...g, current]);
     setCurrent("");
-    setAttempt(a => a + 1);
+    setAttempt((a) => a + 1);
 
-    if (rowScore === 2)           { setState("won");  finish(newScore); }
-    else if (attempt + 1 >= MAX_ATTEMPTS) { setState("lost"); finish(newScore); }
+    if (hit === 2) {
+      setState("won");
+      finish(1);                          // score 1 (uma dupla acertada)
+    } else if (attempt + 1 >= MAX_ATTEMPTS) {
+      setState("lost");
+      finish(hit);
+    }
   };
 
-  /* -------- ranking -------- */
-  const finish = (finalScore: number) => {
-    const newRank = [...rank, { name: player, score: finalScore, attempts: attempt + 1 }]
-      .sort((a, b) =>
-        b.score !== a.score ? b.score - a.score : a.attempts - b.attempts
-      )
+  /* ---------- ranking ---------- */
+  const finish = (score: number) => {
+    const newRank = [...ranking, { name: playerName, score, attempts: attempt + 1 }]
+      .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.attempts - b.attempts))
       .slice(0, 10);
-    setRank(newRank);
-    saveRank(newRank);
+
+    setRanking(newRank);
+    writeRank(newRank);
+    setShowResult(true);
   };
 
-  /* ---------------- render ---------------- */
+  /* =================================================================== */
   return (
-    <div className="min-h-screen flex flex-col items-center max-w-3xl mx-auto px-4">
-      <NameDialog
-        isOpen={showName}
-        onSubmit={n => { setPlayer(n.trim()); setShowName(false); }}
-      />
-
-      <GameHeader openRanking={() => setRankOpen(true)} />
+    <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-8 px-4">
+      <GameHeader openRanking={() => setShowRanking(true)} />
 
       <GameBoard
         guesses={guesses}
@@ -166,25 +162,30 @@ const Index: React.FC = () => {
         currentAttempt={attempt}
       />
 
+      {/* diálogos ----------------------------------------------------- */}
+      <NameDialog
+        isOpen={showName}
+        onSubmit={(name) => { setPlayerName(name.trim()); setShowName(false); }}
+      />
 
       <GameResult
-        isOpen={state !== "playing"}
+        isOpen={showResult}
         isWin={state === "won"}
-        score={score}
+        score={state === "won" ? 1 : 0}
         attempts={attempt}
         secretWord1={secret1}
         secretWord2={secret2}
         onRestart={startGame}
-        onClose={() => setState("playing")}
+        onClose={() => setShowResult(false)}
       />
 
       <RankingDialog
-        isOpen={rankOpen}
-        onClose={() => setRankOpen(false)}
-        players={rank}
-        onResetRanking={() => { setRank([]); saveRank([]); }}
+        isOpen={showRanking}
+        onClose={() => setShowRanking(false)}
+        players={ranking}
+        onResetRanking={() => { setRanking([]); writeRank([]); }}
       />
-    </div>
+    </main>
   );
 };
 

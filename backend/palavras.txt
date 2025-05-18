@@ -74,3 +74,9 @@ peixe
 roupa
 porta
 morro
+lapis
+vidro
+ponta
+roupa
+calda
+fervo

@@ -64,7 +64,7 @@ const WordRow: React.FC<WordRowProps> = ({
   const activePos  = current.length;            // cursor visual
 
   return (
-    <div className={`flex justify-center gap-6 ${className}`}>
+    <div className={`flex justify-center gap-20 ${className}`}>
       {/* palavra 1 ------------------------------------------------ */}
       <div className="flex gap-1 sm:gap-2">
         {Array.from({ length: 5 }, (_, i) => (

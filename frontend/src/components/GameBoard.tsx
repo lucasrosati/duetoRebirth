@@ -22,7 +22,7 @@ const GameBoard: React.FC<GameBoardProps> = ({
     {Array.from({ length: maxAttempts }, (_, row) => (
       <WordRow
         key={row}
-        className="gap-6"
+        /* WordRow já define gap-20 internamente; não sobrepor aqui */
         guess={guesses[row] ?? ""}
         current={row === currentAttempt ? currentGuess : ""}
         secretWord1={secretWord1}

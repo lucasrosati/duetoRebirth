@@ -1,121 +1,112 @@
-Dueto
+# Dueto Rebirth
 
-Jogo de palavras inspirado no Wordle em duplas. Frontend em React/Tailwind e backend em C com servidor HTTP.
+**Visão Geral**  
+Dueto Rebirth é um jogo de adivinhação de duas palavras simultâneas. Backend em C, frontend em React + Vite, integrado à API Gemini para gerar dicas inteligentes.
 
-Requisitos atendidos
+---
 
-Backend em C usando libmicrohttpd
+## 🧱 Requisitos
 
-Menu interativo em HTML servido pelo backend em C
+- GCC ou Clang (`gcc`, `make`)  
+- `libcurl-dev`  
+- `libmicrohttpd-dev`  
+- Node.js ≥ 14 e npm ou yarn  
+- API Key da Gemini
 
-Estrutura de Dados: lista ligada simples para ranking
+---
 
-Algoritmo de Ordenação: Insertion Sort em C (ordenarRankingPorMerito())
+## ⚙️ Instalação de Dependências
 
-Integração com IA: obterPalavrasDaIA()
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install build-essential libcurl4-openssl-dev libmicrohttpd-dev
+```
+## MacOS (Homebrew):
+```bash
+brew install curl microhttpd
+```
+## 🔧 Backend (C)
 
-Funções em C: mínimo de cinco funções que manipulam o ranking
-
-Documentação: descrição das principais funções abaixo
-
-Instalação e uso
-
-1. Dependências C
-
-macOS: brew install libmicrohttpd curl
-
-Ubuntu/Debian: sudo apt-get install libmicrohttpd-dev libcurl4-openssl-dev
-
-2. Compilar backend
-
+Acesse a pasta do backend:
+```bash
 cd backend
-make clean && make
+```
+Compile o projeto:
+```bash
+make
+```
+Isso gera dois executáveis:
+dueto: versão CLI do jogo
+dueto_server: versão REST
 
-Isso gera o executável dueto_server.
-
-3. Executar backend
-
+Para rodar o servidor REST:
+```bash
 ./dueto_server
+```
+## 💻 Frontend (React + Vite)
 
-Acesse no navegador: http://localhost:8888/
-
-4. Executar frontend (opcional)
-
-cd frontend
+Acesse a pasta do frontend:
+```bash
+cd ../frontend
+```
+Instale as dependências:
+```bash
 npm install
+```
+Crie um arquivo .env com sua API Key:
+VITE_GEMINI_API_KEY=SUA_API_KEY_AQUI
+
+Rode o frontend:
+```bash
 npm run dev
+```
+Acesse no navegador:
+```bash
+http://localhost:3000
+```
+## 🕹️ Como Jogar
 
-Abra http://localhost:3000/.
+Você precisa acertar duas palavras simultaneamente.
+São 6 tentativas no total.
+A cada tentativa, você recebe feedback visual:
+✅ Letra correta na posição certa
+🟡 Letra presente mas na posição errada
+⬜ Letra ausente
 
-Rotas disponíveis
+## 🌐 Endpoints REST
+```bash
+GET /status
+```
+Verifica se o servidor está online.
 
-Rota
+Resposta:
+```bash
+{ "status": "ok" }
+```
+```bash
+POST /guess
+```
+Envia um palpite de palavra.
 
-Método
+Corpo da requisição:
+```bash
+{ "guess": "palavra" }
+Resposta esperada:
 
-Descrição
+{
+  "feedback": [0, 1, 2, 0, 0],
+  "correct": false
+}
+```
+## 🤝 Contribuição
 
-/
+Fork o repositório e clone localmente.
+Crie uma branch para sua feature:
+git checkout -b feature/nome-da-feature
+Faça os commits com mensagens claras.
+Abra um Pull Request para main.
 
-GET
+## 📜 Licença
 
-Menu HTML
-
-/login
-
-POST
-
-Registra jogador atual
-
-/palavras
-
-GET
-
-JSON com duas palavras
-
-/ranking
-
-GET
-
-JSON do ranking ordenado em C
-
-/ranking_page
-
-GET
-
-Página HTML exibindo ranking
-
-/ranking/reset
-
-POST
-
-Reseta ranking
-
-Estrutura de Dados e Algoritmo
-
-Lista Ligada de Jogador { nome, tentativas, acertos, prox }
-
-Insertion Sort em C na função ordenarRankingPorMerito()
-
-Documentação de Funções (C)
-
-obterPalavrasDaIA(char *p1, char *p2)
-
-carregarRanking(void)
-
-salvarRanking(void)
-
-adicionarAoRanking(const char *nome, int tentativas, int acertos)
-
-ordenarRankingPorMerito(void)
-
-resetarRanking(void)
-
-liberarRanking(void)
-
-set_current_player(const char *nome)
-
-Licença
-
-MIT © Seu Nome
-
+Este projeto está sob a licença MIT.

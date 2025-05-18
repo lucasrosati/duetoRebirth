@@ -1,64 +1,121 @@
-DUETO - Jogo de Dueto
+Dueto
 
-Visão Geral:
 Jogo de palavras inspirado no Wordle em duplas. Frontend em React/Tailwind e backend em C com servidor HTTP.
 
-Requisitos atendidos:
+Requisitos atendidos
 
-Backend em C usando libmicrohttpd.
+Backend em C usando libmicrohttpd
 
-Menu interativo em HTML servido pelo backend em C.
+Menu interativo em HTML servido pelo backend em C
 
-Lista ligada simples para ranking.
+Estrutura de Dados: lista ligada simples para ranking
 
-Insertion sort em C (função ordenarRankingPorMerito()).
+Algoritmo de Ordenação: Insertion Sort em C (ordenarRankingPorMerito())
 
-Integração com IA (obterPalavrasDaIA()).
+Integração com IA: obterPalavrasDaIA()
 
-Mínimo de cinco funções em C manipulando ranking.
+Funções em C: mínimo de cinco funções que manipulam o ranking
 
-Documentação das funções abaixo.
+Documentação: descrição das principais funções abaixo
 
-Instalação e uso:
+Instalação e uso
 
-Instalar libmicrohttpd e libcurl (libmicrohttpd-dev, libcurl-dev).
+1. Dependências C
 
-No diretório backend: rodar make e depois ./dueto_server.
+macOS: brew install libmicrohttpd curl
 
-Acessar no navegador: http://localhost:8888/
+Ubuntu/Debian: sudo apt-get install libmicrohttpd-dev libcurl4-openssl-dev
 
-Na interface, usar botões: Jogar, Visualizar Ranking, Resetar Ranking.
+2. Compilar backend
 
-Frontend em React: no diretório frontend, rodar npm install e npm run dev.
+cd backend
+make clean && make
 
-Rotas do servidor C:
-GET  /           -> menu HTML
-POST /login      -> registra jogador
-GET  /palavras   -> JSON com duas palavras
-GET  /ranking    -> JSON do ranking ordenado em C
-GET  /ranking_page -> página HTML do ranking
-POST /ranking/reset -> reseta ranking
+Isso gera o executável dueto_server.
 
-Funções principais (C):
+3. Executar backend
 
-obterPalavrasDaIA(p1, p2): busca palavras na IA.
+./dueto_server
 
-carregarRanking(): lê arquivo e popula lista.
+Acesse no navegador: http://localhost:8888/
 
-salvarRanking(): escreve arquivo com ranking.
+4. Executar frontend (opcional)
 
-adicionarAoRanking(nome, tentativas, acertos): insere nó e chama ordenação.
+cd frontend
+npm install
+npm run dev
 
-ordenarRankingPorMerito(): insertion sort na lista ligada.
+Abra http://localhost:3000/.
 
-resetarRanking(): limpa lista e arquivo.
+Rotas disponíveis
 
-liberarRanking(): libera memória.
+Rota
 
-set_current_player(nome): armazena jogador atual.
+Método
 
-Estrutura de Dados:
-Lista ligada de Jogador { nome, tentativas, acertos, prox }.
+Descrição
 
-Licença:
+/
+
+GET
+
+Menu HTML
+
+/login
+
+POST
+
+Registra jogador atual
+
+/palavras
+
+GET
+
+JSON com duas palavras
+
+/ranking
+
+GET
+
+JSON do ranking ordenado em C
+
+/ranking_page
+
+GET
+
+Página HTML exibindo ranking
+
+/ranking/reset
+
+POST
+
+Reseta ranking
+
+Estrutura de Dados e Algoritmo
+
+Lista Ligada de Jogador { nome, tentativas, acertos, prox }
+
+Insertion Sort em C na função ordenarRankingPorMerito()
+
+Documentação de Funções (C)
+
+obterPalavrasDaIA(char *p1, char *p2)
+
+carregarRanking(void)
+
+salvarRanking(void)
+
+adicionarAoRanking(const char *nome, int tentativas, int acertos)
+
+ordenarRankingPorMerito(void)
+
+resetarRanking(void)
+
+liberarRanking(void)
+
+set_current_player(const char *nome)
+
+Licença
+
 MIT © Seu Nome
+

@@ -1,0 +1,61 @@
+# Build binaries
+dueto
+dueto_server
+
+# Debug symbol folders (macOS)
+*.dSYM/
+*.dSYM
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node modules (se tiver frontend React)
+node_modules/
+dist/
+build/
+
+# Local env files
+.env
+.env.local
+.env.*
+
+# Backup files
+*.bak
+*.tmp
+
+# node/Vite
+node_modules/
+dist/
+
+# C build files
+dueto
+dueto_server
+*.o
+*.out
+*.dSYM/
+
+# VSCode
+.vscode/
+
+# Logs
+*.log
+
+# MacOS
+.DS_Store
+
+# Ignore ranking temporários
+*.txt~

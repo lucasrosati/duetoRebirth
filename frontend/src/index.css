@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================================================== */
+/* ===============  CAMADA DE ESTILOS DO JOGO ===========*/
+/* ===================================================== */
+@layer components {
+
+  /* ---------- grade de letras ---------- */
+  .letter-tile {
+    @apply w-12 h-12 border-2 border-gray-500 flex items-center
+           justify-center text-xl font-bold uppercase
+           transition-all duration-200 select-none;
+  }
+  .letter-tile-active  { @apply border-wordle-correct border-opacity-70; }
+  .letter-tile-filled  { @apply border-gray-500 bg-gray-800; }
+  .letter-tile-correct { @apply bg-wordle-correct text-white border-wordle-correct; }
+  .letter-tile-present { @apply bg-wordle-present text-white border-wordle-present; }
+  .letter-tile-absent  { @apply bg-wordle-absent  text-white border-wordle-absent; }
+
+  .letter-tile-correct,
+  .letter-tile-present,
+  .letter-tile-absent   { @apply animate-flip; }
+
+  /* ---------- teclado ---------- */
+  .keyboard-key {
+    @apply h-10 px-2 rounded-sm border border-gray-500 flex
+           items-center justify-center text-sm font-semibold uppercase
+           bg-gray-200 text-black select-none;
+  }
+  .keyboard-key-correct { @apply bg-wordle-correct text-white border-wordle-correct; }
+  .keyboard-key-present { @apply bg-wordle-present text-white border-wordle-present; }
+  .keyboard-key-absent  { @apply bg-wordle-absent  text-white border-wordle-absent; }
+
+  /* ---------- corpo ---------- */
+  body { @apply bg-black text-white font-sans; }
+}

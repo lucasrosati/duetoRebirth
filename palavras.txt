@@ -1,12 +1,6 @@
-troca
-silva
-carro
-banco
-bruxa
+morro
+calda
 globo
-cofre
-bruxo
-tigre
-coral
-motor
-pluma
+bruxa
+banco
+trevo

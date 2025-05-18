@@ -21,21 +21,21 @@ const NameDialog: React.FC<NameDialogProps> = ({ isOpen, onSubmit }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="bg-wordle-dark text-wordle-light border border-gray-700 max-w-sm">
+      <DialogContent className="bg-zinc-900 text-white border border-white/10 max-w-sm rounded-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
-            Bem-vindo ao DUETO
+          <DialogTitle className="text-center text-2xl font-semibold">
+            Bem-vindo ao <span className="tracking-widest">DUETO</span>
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <p className="text-center">Digite seu nome para começar:</p>
+            <p className="text-center text-white/70">Digite seu nome para começar:</p>
             <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white"
+              className="bg-zinc-800 border-zinc-700 text-white placeholder-white/40"
               placeholder="Seu nome"
               autoFocus
             />
@@ -43,7 +43,7 @@ const NameDialog: React.FC<NameDialogProps> = ({ isOpen, onSubmit }) => {
 
           <Button 
             type="submit" 
-            className="w-full bg-wordle-correct hover:bg-opacity-90"
+            className="w-full bg-green-600 hover:bg-green-700 text-white transition"
             disabled={!name.trim()}
           >
             Começar Jogo

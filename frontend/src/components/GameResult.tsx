@@ -27,34 +27,37 @@ const GameResult: React.FC<GameResultProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-wordle-dark text-wordle-light border border-gray-700 max-w-sm">
+      <DialogContent className="bg-zinc-900 text-white border border-white/10 max-w-sm rounded-2xl p-6">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
+          <DialogTitle className="text-center text-2xl font-semibold">
             {isWin ? 'Parabéns!' : 'Fim de Jogo'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col items-center justify-center py-4 space-y-4">
+        <div className="flex flex-col items-center justify-center py-4 space-y-6">
           {isWin ? (
-            <div className="w-16 h-16 bg-wordle-correct rounded-full flex items-center justify-center animate-bounce-once">
-              <Check className="w-10 h-10" />
+            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center animate-bounce">
+              <Check className="w-10 h-10 text-white" />
             </div>
           ) : (
-            <div className="w-16 h-16 bg-wordle-absent rounded-full flex items-center justify-center animate-shake">
-              <X className="w-10 h-10" />
+            <div className="w-16 h-16 bg-red-700 rounded-full flex items-center justify-center animate-pulse">
+              <X className="w-10 h-10 text-white" />
             </div>
           )}
 
-          <div className="text-center">
-          <p className="text-sm">
-            Você acertou <strong>{score}</strong> de 2 palavras em {attempts} tentativas.
-          </p>
-            <p className="mb-4">
-              As palavras eram: <strong>{secretWord1}</strong> e <strong>{secretWord2}</strong>
+          <div className="text-center text-white/80 space-y-2">
+            <p>
+              Você acertou <strong className="text-white">{score}</strong> de 2 palavras em <strong className="text-white">{attempts}</strong> tentativas.
+            </p>
+            <p>
+              As palavras eram: <strong className="text-white">{secretWord1}</strong> e <strong className="text-white">{secretWord2}</strong>
             </p>
           </div>
 
-          <Button onClick={onRestart} className="w-full bg-wordle-correct hover:bg-opacity-90">
+          <Button 
+            onClick={onRestart} 
+            className="w-full bg-green-600 hover:bg-green-700 text-white transition"
+          >
             Jogar Novamente
           </Button>
         </div>

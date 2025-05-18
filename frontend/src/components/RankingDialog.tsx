@@ -25,9 +25,9 @@ const RankingDialog: React.FC<RankingDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-wordle-dark text-wordle-light border border-gray-700">
+      <DialogContent className="bg-zinc-900 text-white border border-white/10 rounded-2xl p-6">
         <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+          <DialogTitle className="text-2xl font-semibold flex items-center gap-2">
             <Trophy className="h-6 w-6" />
             Ranking
           </DialogTitle>
@@ -35,7 +35,7 @@ const RankingDialog: React.FC<RankingDialogProps> = ({
             variant="ghost" 
             size="icon"
             onClick={onClose}
-            className="rounded-full hover:bg-gray-800"
+            className="rounded-full hover:bg-white/10 transition"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -44,14 +44,14 @@ const RankingDialog: React.FC<RankingDialogProps> = ({
         <div className="mt-4">
           {players.length > 0 ? (
             <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-4 font-bold border-b border-gray-700 pb-2">
+              <div className="grid grid-cols-3 gap-4 font-bold border-b border-white/10 pb-2">
                 <div>Nome</div>
                 <div className="text-center">Acertos</div>
                 <div className="text-center">Tentativas</div>
               </div>
 
               {players.map((player, index) => (
-                <div key={index} className="grid grid-cols-3 gap-4 py-2 border-b border-gray-700 last:border-0">
+                <div key={index} className="grid grid-cols-3 gap-4 py-2 border-b border-white/5 last:border-0">
                   <div className="truncate">{player.name}</div>
                   <div className="text-center">{player.score}</div>
                   <div className="text-center">{player.attempts}</div>
@@ -59,13 +59,13 @@ const RankingDialog: React.FC<RankingDialogProps> = ({
               ))}
             </div>
           ) : (
-            <p className="text-center py-6">Nenhum jogador registrado ainda.</p>
+            <p className="text-center py-6 text-white/70">Nenhum jogador registrado ainda.</p>
           )}
         </div>
 
         <Button 
           onClick={onResetRanking}
-          className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+          className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white transition"
           variant="destructive"
         >
           Resetar Ranking

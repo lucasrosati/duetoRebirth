@@ -1,8 +1,7 @@
 // frontend/src/components/LetterTile.tsx
 import React from "react";
 
-// ①  ────────────────▼───────────────
-export type TileStatus =          //  ←👉  basta acrescentar “export”
+export type TileStatus =
   | "empty"
   | "filled"
   | "correct"
@@ -23,15 +22,20 @@ const LetterTile: React.FC<LetterTileProps> = ({
   isActive = false,
 }) => {
   const getClassName = () => {
-    let className = "letter-tile";
+    let base =
+      "w-12 h-12 sm:w-14 sm:h-14 text-2xl font-bold flex items-center justify-center border rounded select-none transition-all duration-200 ";
 
-    if (status === "empty" && isActive)       className += " letter-tile-active";
-    else if (status === "filled")             className += " letter-tile-filled";
-    else if (status === "correct")            className += " letter-tile-correct";
-    else if (status === "present")            className += " letter-tile-present";
-    else if (status === "absent")             className += " letter-tile-absent";
-
-    return className;
+    if (status === "empty" && isActive)
+      return base + "border-white text-white/80";
+    if (status === "filled")
+      return base + "border-white text-white/80";
+    if (status === "correct")
+      return base + "bg-green-600 text-white border-green-600";
+    if (status === "present")
+      return base + "bg-yellow-500 text-white border-yellow-500";
+    if (status === "absent")
+      return base + "bg-zinc-700 text-white/70 border-zinc-700";
+    return base + "border-white text-white/80";
   };
 
   const style =
@@ -41,7 +45,7 @@ const LetterTile: React.FC<LetterTileProps> = ({
 
   return (
     <div className={getClassName()} style={style}>
-      {letter}
+      {letter.toUpperCase()}
     </div>
   );
 };

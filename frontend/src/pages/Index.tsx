@@ -4,7 +4,6 @@ import { useToast } from "@/components/ui/use-toast";
 
 import GameHeader    from "@/components/GameHeader";
 import GameBoard     from "@/components/GameBoard";
-import Keyboard      from "@/components/Keyboard";
 import GameResult    from "@/components/GameResult";
 import RankingDialog from "@/components/RankingDialog";
 import NameDialog    from "@/components/NameDialog";
@@ -167,12 +166,6 @@ const Index: React.FC = () => {
         currentAttempt={attempt}
       />
 
-      <Keyboard
-        onKeyPress={pressLetter}
-        onBackspace={pressBack}
-        onEnter={pressEnter}
-        keyStatuses={keyStatus}
-      />
 
       <GameResult
         isOpen={state !== "playing"}

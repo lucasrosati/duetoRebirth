@@ -72,3 +72,5 @@ porta
 vidro
 peixe
 roupa
+porta
+morro

@@ -40,16 +40,33 @@ const Index: React.FC = () => {
   const [showRanking,  setShowRanking]  = useState(false);
   const [showResult,   setShowResult]   = useState(false);
 
-  /* ─────────── inicia / reinicia partida ─────────── */
-  const startFresh = useCallback(async () => {
+  const [secret1, setSecret1] = useState("");
+  const [secret2, setSecret2] = useState("");
+
+  const [guesses, setGuesses]   = useState<string[]>([]);
+  const [current, setCurrent]   = useState("");
+  const [attempt, setAttempt]   = useState(0);
+  const [state,   setState]     = useState<GameState>("playing");
+
+  const [ranking,       setRanking]       = useState<RankingEntry[]>(readRank);
+  const [showRanking,   setShowRanking]   = useState(false);
+  const [showResult,    setShowResult]    = useState(false);
+
+  /* ---------- inicia / reinicia partida ---------- */
+  const startGame = useCallback(async () => {
     try {
       const { palavra1, palavra2 } = await fetchWords();
-      setSecret1(palavra1);
-      setSecret2(palavra2);
+      setSecret1(palavra1.toLowerCase());
+      setSecret2(palavra2.toLowerCase());
     } catch {
-      toast({ title: "Erro", description: "Backend indisponível – usando palavras locais.", variant: "destructive" });
-      setSecret1("aureo");
-      setSecret2("cargo");
+      toast({
+        title: "Erro",
+        description: "Backend indisponível – usando palavras locais.",
+        variant: "destructive",
+      });
+      const local = ["aureo", "cargo"];           // fallback
+      setSecret1(local[0]);
+      setSecret2(local[1]);
     }
     setGuesses([]); setCurrent(""); setAttempt(0);
     setFound1(false); setFound2(false); setLastScore(0);
@@ -59,19 +76,23 @@ const Index: React.FC = () => {
   /* ─────────── listener de teclado ─────────── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (view !== "playing" || showNameDlg) return;
-      if (found1 && found2) return;
-      if (e.key === "Enter")       { e.preventDefault(); handleEnter(); }
+      if (showName || state !== "playing") return;
+      if (e.key === "Enter")   { e.preventDefault(); handleEnter();   }
       else if (e.key === "Backspace") { e.preventDefault(); handleBack(); }
-      else if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); handleLetter(e.key.toLowerCase()); }
+      else if (/^[a-zA-Z]$/.test(e.key)) {
+        e.preventDefault();
+        handleLetter(e.key.toLowerCase());
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [view, current, found1, found2, showNameDlg]);
 
-  /* ─────────── handlers de input ─────────── */
-  const handleLetter = (l: string) => { if (current.length < 5) setCurrent(p => p + l); };
-  const handleBack   = () => setCurrent(p => p.slice(0, -1));
+  /* ---------- lógica Wordle ---------- */
+  const evaluate = (guess: string, target: string): TileStatus[] => {
+    type Tmp = TileStatus | "pending";
+    const res: Tmp[] = Array(5).fill("empty");
+    const bal: Record<string, number> = {};
 
   const finishRound = (score: number) => {
     setLastScore(score);
@@ -82,26 +103,31 @@ const Index: React.FC = () => {
     setShowResult(true);
   };
 
+  /* ---------- handlers ---------- */
+  const handleLetter = (l: string) => {
+    if (current.length < 5) setCurrent((p) => p + l);
+  };
+  const handleBack = () => setCurrent((p) => p.slice(0, -1));
+
   const handleEnter = () => {
     if (current.length !== 5) {
       toast({ title: "Palavra incompleta", description: "Digite 5 letras antes de enviar.", variant: "destructive" });
       return;
     }
 
-    const hit1 = !found1 && current === secret1;
-    const hit2 = !found2 && current === secret2;
-    if (hit1) setFound1(true);
-    if (hit2) setFound2(true);
+    const hit =
+      (current === secret1 ? 1 : 0) + (current === secret2 ? 1 : 0);
 
-    const scoreThis   = (hit1?1:0)+(hit2?1:0);
-    const totalScores = (found1?1:0)+(found2?1:0)+scoreThis;
-
-    setGuesses(g => [...g, current]);
-    setAttempt(a => a+1);
+    setGuesses((g) => [...g, current]);
     setCurrent("");
 
-    if (totalScores === 2)            { setView("won");  finishRound(2); }
-    else if (attempt + 1 >= MAX_ATTEMPTS) { setView("lost"); finishRound(totalScores); }
+    if (hit === 2) {
+      setState("won");
+      finish(1);                          // score 1 (uma dupla acertada)
+    } else if (attempt + 1 >= MAX_ATTEMPTS) {
+      setState("lost");
+      finish(hit);
+    }
   };
 
   /* ─────────── telas ─────────── */
@@ -149,8 +175,8 @@ const Index: React.FC = () => {
 
       <GameResult
         isOpen={showResult}
-        isWin={view === "won"}
-        score={lastScore}
+        isWin={state === "won"}
+        score={state === "won" ? 1 : 0}
         attempts={attempt}
         secretWord1={secret1}
         secretWord2={secret2}

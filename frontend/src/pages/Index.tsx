@@ -7,38 +7,29 @@ import GameBoard     from "@/components/GameBoard";
 import GameResult    from "@/components/GameResult";
 import RankingDialog from "@/components/RankingDialog";
 import NameDialog    from "@/components/NameDialog";
-import { Button }    from "@/components/ui/button";
 import { fetchWords } from "@/lib/api";
 
-/* ───────────────── tipos & helpers ───────────────── */
-type GameState = "menu" | "playing" | "won" | "lost";
+/* ---------- tipos utilitários ---------- */
+type TileStatus = "empty" | "filled" | "correct" | "present" | "absent";
+type GameState  = "playing" | "won" | "lost";
 interface RankingEntry { name: string; score: number; attempts: number }
 
-const LS_KEY       = "dueto_rank";
-const MAX_ATTEMPTS = 6;
+const LS_KEY        = "dueto_rank";
+const MAX_ATTEMPTS  = 6;
 
-const readRank  = (): RankingEntry[] => JSON.parse(localStorage.getItem(LS_KEY) ?? "[]");
-const writeRank = (r: RankingEntry[])  => localStorage.setItem(LS_KEY, JSON.stringify(r));
+/* ---------- helpers ---------- */
+const readRank  = (): RankingEntry[] =>
+  JSON.parse(localStorage.getItem(LS_KEY) ?? "[]");
+const writeRank = (r: RankingEntry[]) =>
+  localStorage.setItem(LS_KEY, JSON.stringify(r));
 
-/* ───────────────── componente ───────────────── */
+/* ===================================================================== */
 const Index: React.FC = () => {
   const { toast } = useToast();
 
-  /* estado principal */
-  const [view,         setView]         = useState<GameState>("menu");
-  const [playerName,   setPlayerName]   = useState("");
-  const [secret1,      setSecret1]      = useState("");
-  const [secret2,      setSecret2]      = useState("");
-  const [found1,       setFound1]       = useState(false);
-  const [found2,       setFound2]       = useState(false);
-  const [guesses,      setGuesses]      = useState<string[]>([]);
-  const [current,      setCurrent]      = useState("");
-  const [attempt,      setAttempt]      = useState(0);
-  const [lastScore,    setLastScore]    = useState(0);
-  const [ranking,      setRanking]      = useState<RankingEntry[]>(readRank);
-  const [showNameDlg,  setShowNameDlg]  = useState(false);
-  const [showRanking,  setShowRanking]  = useState(false);
-  const [showResult,   setShowResult]   = useState(false);
+  /* ---------- estado principal ---------- */
+  const [playerName, setPlayerName] = useState("");
+  const [showName,   setShowName]   = useState(true);
 
   const [secret1, setSecret1] = useState("");
   const [secret2, setSecret2] = useState("");
@@ -48,9 +39,9 @@ const Index: React.FC = () => {
   const [attempt, setAttempt]   = useState(0);
   const [state,   setState]     = useState<GameState>("playing");
 
-  const [ranking,       setRanking]       = useState<RankingEntry[]>(readRank);
-  const [showRanking,   setShowRanking]   = useState(false);
-  const [showResult,    setShowResult]    = useState(false);
+  const [ranking,     setRanking]     = useState<RankingEntry[]>(readRank);
+  const [showRanking, setShowRanking] = useState(false);
+  const [showResult,  setShowResult]  = useState(false);
 
   /* ---------- inicia / reinicia partida ---------- */
   const startGame = useCallback(async () => {
@@ -61,24 +52,27 @@ const Index: React.FC = () => {
     } catch {
       toast({
         title: "Erro",
-        description: "Backend indisponível – usando palavras locais.",
+        description: "Backend indisponível – usando fallback.",
         variant: "destructive",
       });
-      const local = ["aureo", "cargo"];           // fallback
-      setSecret1(local[0]);
-      setSecret2(local[1]);
+      setSecret1("lapis");
+      setSecret2("cargo");
     }
-    setGuesses([]); setCurrent(""); setAttempt(0);
-    setFound1(false); setFound2(false); setLastScore(0);
-    setShowResult(false); setView("playing");
+    setGuesses([]);
+    setCurrent("");
+    setAttempt(0);
+    setState("playing");
+    setShowResult(false);
   }, [toast]);
 
-  /* ─────────── listener de teclado ─────────── */
+  useEffect(() => { if (playerName) startGame(); }, [playerName, startGame]);
+
+  /* ---------- escuta teclado físico ---------- */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (showName || state !== "playing") return;
-      if (e.key === "Enter")   { e.preventDefault(); handleEnter();   }
-      else if (e.key === "Backspace") { e.preventDefault(); handleBack(); }
+      if (e.key === "Enter")        { e.preventDefault(); handleEnter(); }
+      else if (e.key === "Backspace"){ e.preventDefault(); handleBack();  }
       else if (/^[a-zA-Z]$/.test(e.key)) {
         e.preventDefault();
         handleLetter(e.key.toLowerCase());
@@ -86,22 +80,33 @@ const Index: React.FC = () => {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [view, current, found1, found2, showNameDlg]);
+  }, [current, state, showName]);
 
-  /* ---------- lógica Wordle ---------- */
+  /* ---------- avaliação Wordle ---------- */
   const evaluate = (guess: string, target: string): TileStatus[] => {
     type Tmp = TileStatus | "pending";
     const res: Tmp[] = Array(5).fill("empty");
     const bal: Record<string, number> = {};
 
-  const finishRound = (score: number) => {
-    setLastScore(score);
-    const newRank = [...ranking, { name: playerName, score, attempts: attempt + 1 }]
-      .sort((a,b)=> b.score!==a.score ? b.score-a.score : a.attempts-b.attempts)
-      .slice(0,10);
-    setRanking(newRank); writeRank(newRank);
-    setShowResult(true);
+    for (let i = 0; i < 5; i++) {
+      const g = guess[i];
+      const t = target[i];
+      if (!g) continue;
+      if (g === t) res[i] = "correct";
+      else { res[i] = "pending"; bal[t] = (bal[t] || 0) + 1; }
+    }
+    for (let i = 0; i < 5; i++) {
+      if (res[i] !== "pending") continue;
+      const g = guess[i];
+      res[i] = bal[g] ? "present" : "absent";
+      if (bal[g]) bal[g]--;
+    }
+    return res as TileStatus[];
   };
+
+  /* ---------- helpers de jogo ---------- */
+  const totalAcertos = (lista: string[]): number =>
+    (lista.includes(secret1) ? 1 : 0) + (lista.includes(secret2) ? 1 : 0);
 
   /* ---------- handlers ---------- */
   const handleLetter = (l: string) => {
@@ -111,84 +116,77 @@ const Index: React.FC = () => {
 
   const handleEnter = () => {
     if (current.length !== 5) {
-      toast({ title: "Palavra incompleta", description: "Digite 5 letras antes de enviar.", variant: "destructive" });
+      toast({
+        title: "Palavra incompleta",
+        description: "Digite 5 letras antes de enviar.",
+        variant: "destructive",
+      });
       return;
     }
 
-    const hit =
-      (current === secret1 ? 1 : 0) + (current === secret2 ? 1 : 0);
+    const novaLista = [...guesses, current];
+    const scoreAgora = totalAcertos(novaLista);
 
-    setGuesses((g) => [...g, current]);
+    setGuesses(novaLista);
     setCurrent("");
+    setAttempt((a) => a + 1);
 
-    if (hit === 2) {
+    if (scoreAgora === 2) {
       setState("won");
-      finish(1);                          // score 1 (uma dupla acertada)
+      finish(2);
     } else if (attempt + 1 >= MAX_ATTEMPTS) {
       setState("lost");
-      finish(hit);
+      finish(scoreAgora);
     }
   };
 
-  /* ─────────── telas ─────────── */
-  if (view === "menu") {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-900 text-white gap-6">
-        <h1 className="text-5xl font-extrabold tracking-widest">DUETO</h1>
+  /* ---------- ranking ---------- */
+  const finish = (score: number) => {
+    const newRank = [...ranking, { name: playerName, score, attempts: attempt + 1 }]
+      .sort((a, b) => (b.score !== a.score ? b.score - a.score : a.attempts - b.attempts))
+      .slice(0, 10);
 
-        <Button className="w-40 bg-indigo-600 hover:bg-indigo-700" onClick={()=> setShowNameDlg(true)}>
-          Jogar
-        </Button>
-        <Button variant="secondary" className="w-40" onClick={()=> setShowRanking(true)}>
-          Visualizar Ranking
-        </Button>
+    setRanking(newRank);
+    writeRank(newRank);
+    setShowResult(true);
+  };
 
-        <NameDialog
-          isOpen={showNameDlg}
-          onSubmit={name => { setPlayerName(name.trim()); setShowNameDlg(false); startFresh(); }}
-        />
-        <RankingDialog
-          isOpen={showRanking}
-          onClose={()=> setShowRanking(false)}
-          players={ranking}
-          onResetRanking={()=> { setRanking([]); writeRank([]); }}
-        />
-      </main>
-    );
-  }
-
-  /* ─────────── tela de jogo ─────────── */
+  /* =================================================================== */
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center bg-black text-white px-4 py-10">
-      <GameHeader openRanking={()=> setShowRanking(true)} />
+    <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-8 px-4">
+      <GameHeader openRanking={() => setShowRanking(true)} />
 
-      <div className="my-10">
-        <GameBoard
-          guesses={guesses}
-          currentGuess={current}
-          secretWord1={secret1}
-          secretWord2={secret2}
-          maxAttempts={MAX_ATTEMPTS}
-          currentAttempt={attempt}
-        />
-      </div>
+      <GameBoard
+        guesses={guesses}
+        currentGuess={current}
+        secretWord1={secret1}
+        secretWord2={secret2}
+        maxAttempts={MAX_ATTEMPTS}
+        currentAttempt={attempt}
+      />
+
+      {/* diálogos ----------------------------------------------------- */}
+      <NameDialog
+        isOpen={showName}
+        onSubmit={(name) => { setPlayerName(name.trim()); setShowName(false); }}
+      />
 
       <GameResult
         isOpen={showResult}
         isWin={state === "won"}
-        score={state === "won" ? 1 : 0}
+        score={totalAcertos(guesses)}
         attempts={attempt}
         secretWord1={secret1}
         secretWord2={secret2}
-        onRestart={()=> setView("menu")}
-        onClose={()=> setShowResult(false)}
+        onRestart={startGame}
+        onClose={() => setShowResult(false)}
       />
 
       <RankingDialog
         isOpen={showRanking}
-        onClose={()=> setShowRanking(false)}
+        onClose={() => setShowRanking(false)}
         players={ranking}
-        onResetRanking={()=> { setRanking([]); writeRank([]); }}
+        onResetRanking={() => { setRanking([]); writeRank([]); }}
       />
     </main>
   );
